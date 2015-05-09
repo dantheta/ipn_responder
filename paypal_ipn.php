@@ -110,7 +110,10 @@ if (strcmp ($res, "VERIFIED") == 0) {
 		msglog( "Verified IPN: $req ");
 	}
 
-    if ($_POST['payment_status'] == 'Completed') {
+    // send email for completed non-recurring payment or for recurring payment setup
+    // otherwise we'd send an email for every payment made on a recurring basis
+    if (($_POST['txn_type'] != 'recurring_payment' && $_POST['payment_status'] == 'Completed') 
+        || $_POST['txn_type'] == 'recurring_payment_profile_created') {
 
 
         $mail = new PHPMailer();
@@ -120,6 +123,7 @@ if (strcmp ($res, "VERIFIED") == 0) {
         }
 
         $mail->From = $CONFIG['from_address'];
+        $mail->FromName = $CONFIG['from_name'];
         $mail->AddAddress($_POST['payer_email']);
 
         $mail->Subject = $CONFIG['subject'];
@@ -131,8 +135,13 @@ if (strcmp ($res, "VERIFIED") == 0) {
             'EMAIL' => $_POST['payer_email']
         );
 
-        $mail->AltBody = run_template($CONFIG['template_text'], $template_args, false);
-        $mail->Body = run_template($CONFIG['template_html'], $template_args, true);
+        if ($_POST['txn_type'] == 'recurring_payment_profile_created') {
+            $mail->AltBody = run_template($CONFIG['recurring_template_text'], $template_args, false);
+            $mail->Body = run_template($CONFIG['recurring_template_html'], $template_args, true);
+        } else {
+            $mail->AltBody = run_template($CONFIG['template_text'], $template_args, false);
+            $mail->Body = run_template($CONFIG['template_html'], $template_args, true);
+        }
 
         if(!$mail->Send()) {
             msglog("Error sending mail: {$mail->ErrorInfo}");
@@ -142,7 +151,7 @@ if (strcmp ($res, "VERIFIED") == 0) {
         }
 
     } else {
-        msglog("Invalid payment_type or payment_status: {$_POST['payment_type']}, {$_POST['payment_status']}");
+        msglog("Invalid payment_type or payment_status: {$_POST['payment_type']}, {$_POST['payment_status']}, {$_POST['txn_type']}");
     }
 
 

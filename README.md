@@ -19,6 +19,11 @@ Copy config.example.php to config.php, and edit to suit environment.
 
 Add a template.txt and template.html file (both files are needed for multipart emails).
 
+The script can use separate templates for recurring payments, named 
+recurring_template.html and recurring_template.txt.  
+
+The filenames and locations can be changed in the config file.
+
 ## Templates
 
 The responder script supports two templates, one plain text and one HTML.  The template engine will replace text variables enclosed in curly braces. The three parameters currently supported are:
